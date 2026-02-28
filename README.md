@@ -63,6 +63,18 @@ npm install
 npm run electron:dev
 ```
 
+### 解决 macOS "应用已损坏" / "无法验证开发者" 问题
+由于此安装包是用个人开发者证书构建的，macOS 的安全机制（Gatekeeper）可能会默认拦截从网页下载的应用。
+
+**解决方案：**
+1. 把 CodeNova.app 放到 Applications (应用程序) 文件夹后
+2. 打开系统自带的 **终端 (Terminal)** 
+3. 复制并执行以下命令解除系统的隔离限制（过程可能会要求你输入电脑开机密码）：
+   ```bash
+   sudo xattr -rd com.apple.quarantine /Applications/CodeNova.app
+   ```
+4. 执行完成后，再去启动台点击 CodeNova 即可满血畅听！
+
 ---
 
 ## 🤖 强大的模型支持
