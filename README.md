@@ -53,7 +53,7 @@ CodeNova 是基于官方 **Claude Agent SDK** 打造的现代化桌面可视化�
 ### 方式二：源码启动 (开发者)
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/你的用户名/CodeNova.git
+git clone https://github.com/zkw15555506767-boop/CodeNova.git
 cd CodeNova
 
 # 2. 安装依赖
