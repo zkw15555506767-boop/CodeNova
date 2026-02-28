@@ -1,6 +1,7 @@
 {
   "name": "codenova",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "private": true,
   "description": "CodeNova - 桌面端 AI 编程助手",
   "author": "CodeNova Team",
   "license": "MIT",
