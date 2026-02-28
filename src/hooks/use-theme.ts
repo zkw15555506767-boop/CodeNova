@@ -14,13 +14,22 @@ export function useTheme(): UseThemeReturn {
   const [theme, setThemeState] = useState<Theme>('gradient')
 
   useEffect(() => {
-    // 从 localStorage 读取主题
-    const savedTheme = localStorage.getItem('codenova-theme') as Theme | null
-    if (savedTheme) {
-      setThemeState(savedTheme)
-    } else {
-      // 默认为极光渐变主题
+    // 强制迁移 1.0.1 默认唤起渐变色一次（覆盖 1.0.0 的缓存）
+    const migrated = localStorage.getItem('codenova-theme-migrated-1.0.1')
+
+    if (!migrated) {
       setThemeState('gradient')
+      localStorage.setItem('codenova-theme', 'gradient')
+      localStorage.setItem('codenova-theme-migrated-1.0.1', 'true')
+    } else {
+      // 从 localStorage 读取主题
+      const savedTheme = localStorage.getItem('codenova-theme') as Theme | null
+      if (savedTheme) {
+        setThemeState(savedTheme)
+      } else {
+        // 默认为极光渐变主题
+        setThemeState('gradient')
+      }
     }
   }, [])
 

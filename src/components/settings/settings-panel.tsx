@@ -813,10 +813,8 @@ function AboutSettings() {
           N
         </div>
         <h2 className="text-2xl font-bold mb-2">CodeNova</h2>
-        <p className="text-muted-foreground mb-4">版本 1.0.0</p>
-        <p className="text-sm text-muted-foreground">
-          桌面端 AI 编程助手
-        </p>
+        <p className="text-muted-foreground mb-4">版本 1.0.1</p>
+        <p className="text-sm text-muted-foreground mb-8">桌面端 AI 编程助手</p>
       </div>
 
       <div className="space-y-2">

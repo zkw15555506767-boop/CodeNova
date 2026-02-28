@@ -478,6 +478,15 @@ export function useChat(conversationId: string | null) {
 
     try {
       await electronAPI.startAgent(historyMessages, { workingDirectory }, streamId)
+
+      // Fallback state unblock: If invoke completes, ensure the UI stops spinning
+      setMessages(prev => prev.map(msg =>
+        msg.id === assistantMessageId
+          ? { ...msg, isStreaming: false }
+          : msg
+      ))
+      isStreamingRef.current = false
+      setIsStreaming(false)
     } catch (err: any) {
       setMessages(prev => prev.map(msg =>
         msg.id === assistantMessageId
@@ -487,8 +496,14 @@ export function useChat(conversationId: string | null) {
       isStreamingRef.current = false
       setIsStreaming(false)
     } finally {
-      cleanupChunk?.()
-      cleanupPermission?.()
+      // Delay cleanup to allow any pending IPC `agent:chunk` drops to be processed by React's event loop
+      setTimeout(() => {
+        cleanupChunk?.()
+        cleanupPermission?.()
+        if (agentStreamIdRef.current === streamId) {
+          agentStreamIdRef.current = null
+        }
+      }, 500)
     }
   }, [])  // no deps — uses refs for live values
 
