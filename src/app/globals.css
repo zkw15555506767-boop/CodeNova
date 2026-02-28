@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    --surface: 0 0% 100%;
+    --surface-2: 220 24% 98%;
+    --glass: 220 40% 98%;
+    --glow: 221 90% 70%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    --surface: 225 18% 12%;
+    --surface-2: 225 16% 16%;
+    --glass: 225 20% 20%;
+    --glow: 210 90% 70%;
+  }
+
+  /* 渐变主题 - Aurora */
+  .gradient-aurora {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 98%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 270 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 280 60% 70%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 280 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 180 60% 60%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 270 30% 80%;
+    --input: 270 20% 90%;
+    --ring: 270 80% 60%;
+    --radius: 0.75rem;
+    --surface: 0 0% 98%;
+    --surface-2: 240 10% 96%;
+    --glass: 270 40% 96%;
+    --glow: 270 80% 70%;
+  }
+
+  .gradient-aurora.dark {
+    --background: 240 30% 8%;
+    --foreground: 0 0% 95%;
+    --card: 240 25% 12%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 25% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 270 70% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 280 40% 25%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 280 30% 20%;
+    --muted-foreground: 240 10% 60%;
+    --accent: 180 50% 40%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 270 30% 30%;
+    --input: 270 25% 20%;
+    --ring: 270 70% 65%;
+    --surface: 240 22% 12%;
+    --surface-2: 240 20% 16%;
+    --glass: 260 20% 20%;
+    --glow: 270 80% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+    letter-spacing: 0.01em;
+  }
+  code, pre, kbd {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* 代码块样式 */
+.prose pre {
+  @apply rounded-lg;
+}
+
+.prose code {
+  @apply rounded bg-muted px-1 py-0.5;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0;
+}
+
+/* 渐变背景 */
+.gradient-bg {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, hsl(var(--glow) / 0.18), transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, hsl(var(--accent) / 0.18), transparent 55%),
+    radial-gradient(1200px 900px at 50% 110%, hsl(var(--primary) / 0.12), transparent 60%),
+    linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--surface-2)) 100%);
+}
+
+/* 玻璃拟态 */
+.glass {
+  background: hsl(var(--glass) / 0.6);
+  backdrop-filter: blur(18px);
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow:
+    0 10px 30px -20px hsl(var(--foreground) / 0.4),
+    inset 0 1px 0 hsl(var(--foreground) / 0.06);
+}
+
+.app-shell {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 20%, hsl(var(--glow) / 0.08) 0, transparent 45%),
+    radial-gradient(circle at 80% 30%, hsl(var(--accent) / 0.08) 0, transparent 50%),
+    linear-gradient(transparent, transparent);
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+.app-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.035'/></svg>");
+  opacity: 0.6;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+
+@layer utilities {
+  .panel-soft {
+    background: hsl(var(--surface) / 0.7);
+    backdrop-filter: blur(14px);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: 0 20px 45px -35px hsl(var(--foreground) / 0.5);
+  }
+  .glow-border {
+    box-shadow: 0 0 0 1px hsl(var(--glow) / 0.15), 0 10px 30px -20px hsl(var(--glow) / 0.4);
+  }
+}
+
+/* 动画 */
+.animate-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.slide-in-left {
+  animation: slide-in 0.3s ease-out;
+}
