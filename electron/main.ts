@@ -467,9 +467,8 @@ function registerIpcHandlers() {
   // Agent Loop — Claude Agent SDK (spawns local claude CLI)
   // ============================================================
 
-  // Main-process-level lock to prevent concurrent agent sessions
-  let agentRunning = false
-  let agentAbortController: AbortController | null = null
+  // Main-process-level map to support concurrent agent sessions across conversations
+  const activeAgents = new Map<string, AbortController>()
 
   type PermissionResultPayload = {
     behavior: 'allow' | 'deny'
@@ -491,27 +490,32 @@ function registerIpcHandlers() {
     }
   })
 
-  ipcMain.handle('api:agent-stop', () => {
-    if (agentRunning && agentAbortController) {
-      console.log('[api:agent-stop] Aborting active agent session...')
-      agentAbortController.abort()
-      agentAbortController = null
-      agentRunning = false // Force release lock immediately
+  ipcMain.handle('api:agent-stop', (_, streamId: string) => {
+    const controller = activeAgents.get(streamId)
+    if (controller) {
+      console.log(`[api:agent-stop] Aborting active agent session for stream: ${streamId}...`)
+      controller.abort()
+      activeAgents.delete(streamId)
       return { success: true }
     }
     return { success: false, message: 'No active agent session' }
   })
 
-  ipcMain.handle('api:agent', async (event, messages: Array<{ role: string; content: string }>, settings?: {
+  ipcMain.handle('api:agent', async (event, messages: Array<{ role: string; content: string }>, settings: {
     workingDirectory?: string; model?: string; systemPrompt?: string
-  }) => {
-    // Main-process lock: reject concurrent sessions
-    if (agentRunning) {
-      console.warn('[api:agent] Session already running, ignoring duplicate IPC call')
+  } | undefined, streamId: string) => {
+    if (!streamId) {
+      streamId = `agent-${Date.now()}`
+    }
+
+    // Main-process lock: reject concurrent session for the SAME stream
+    if (activeAgents.has(streamId)) {
+      console.warn(`[api:agent] Session already running for stream ${streamId}, ignoring duplicate`)
       return { error: 'Agent already running' }
     }
-    agentRunning = true
-    agentAbortController = new AbortController()
+
+    const agentAbortController = new AbortController()
+    activeAgents.set(streamId, agentAbortController)
 
     const sender = event.sender
     const workingDir = settings?.workingDirectory || app.getPath('home')
@@ -612,9 +616,9 @@ function registerIpcHandlers() {
           const content = sdkMessage.message?.content || []
           for (const block of content) {
             if (block.type === 'text' && block.text) {
-              sender.send('agent:chunk', { type: 'text', text: block.text })
+              sender.send('agent:chunk', { streamId, type: 'text', text: block.text })
             } else if (block.type === 'tool_use') {
-              sender.send('agent:chunk', { type: 'tool_running', toolName: block.name })
+              sender.send('agent:chunk', { streamId, type: 'tool_running', toolName: block.name })
             }
           }
         } else if (msgType === 'tool_result') {
@@ -622,8 +626,9 @@ function registerIpcHandlers() {
           const resultText = typeof resultContent === 'string'
             ? resultContent
             : JSON.stringify(resultContent)
-          console.log('[api:agent] Tool Result for', sdkMessage.toolName, ':', resultText)
+          console.log('[api:agent] Tool Result for', sdkMessage.toolName, ':', resultText?.slice(0, 100))
           sender.send('agent:chunk', {
+            streamId,
             type: 'tool_result',
             toolName: sdkMessage.toolName || '',
             result: resultText?.slice(0, 3000),
@@ -632,24 +637,23 @@ function registerIpcHandlers() {
           console.error('[api:agent] SDK Error Message:', sdkMessage)
         } else if (msgType === 'result') {
           console.log('[api:agent] Session finished')
-          sender.send('agent:chunk', { type: 'done' })
+          sender.send('agent:chunk', { streamId, type: 'done' })
         }
       }
 
-      sender.send('agent:chunk', { type: 'done' })
+      sender.send('agent:chunk', { streamId, type: 'done' })
       return { success: true }
     } catch (err: any) {
       console.error('[api:agent] Fatal error:', err)
       // 如果是用户主动取消产生的错误，则不向 UI 抛出红色异常
       if (err.name === 'AbortError' || (err.message && err.message.includes('aborted'))) {
-        sender.send('agent:chunk', { type: 'done' })
+        sender.send('agent:chunk', { streamId, type: 'done' })
         return { success: true, aborted: true }
       }
-      sender.send('agent:chunk', { type: 'error', error: `Agent 错误: ${err.message}` })
+      sender.send('agent:chunk', { streamId, type: 'error', error: `Agent 错误: ${err.message}` })
       return { error: err.message }
     } finally {
-      agentRunning = false
-      agentAbortController = null
+      activeAgents.delete(streamId)
     }
   })
 

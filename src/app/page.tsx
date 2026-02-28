@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { useConversations } from '@/hooks/use-conversations'
 import { useApiSettings } from '@/hooks/use-api-settings'
 import { ChatView } from '@/components/chat/chat-view'
+import { cn } from '@/lib/utils'
 import { ConversationList } from '@/components/sidebar/conversation-list'
 import { FileTree } from '@/components/sidebar/file-tree'
 import { TitleBar } from '@/components/ui/title-bar'
@@ -143,11 +144,22 @@ export default function Home() {
 
         {/* 中间：聊天区域 + 终端区域 */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 flex flex-col min-h-0">
-            <ChatView
-              conversationId={selectedConversation}
-              projectPath={projectPath}
-            />
+          <div className="flex-1 flex flex-col min-h-0 relative">
+            {conversations.map(conv => (
+              <div
+                key={conv.id}
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-200 flex flex-col min-h-0",
+                  selectedConversation === conv.id ? "z-10 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
+                )}
+              >
+                {/* 仅在渲染列表内保持挂载状态以在后台继续运行对话流 */}
+                <ChatView
+                  conversationId={conv.id}
+                  projectPath={projectPath}
+                />
+              </div>
+            ))}
           </div>
 
           {/* 上下调节把手 */}

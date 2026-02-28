@@ -42,6 +42,7 @@ export function useChat(conversationId: string | null) {
 
   const { settings: apiSettings, isLoaded: settingsLoaded } = useApiSettings()
   const abortControllerRef = useRef<AbortController | null>(null)
+  const agentStreamIdRef = useRef<string | null>(null)
 
   const stopGenerating = useCallback(() => {
     // 停止普通的 Chat 流
@@ -49,8 +50,9 @@ export function useChat(conversationId: string | null) {
       abortControllerRef.current.abort()
     }
     // 停止 Agent 会话
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.stopAgent) {
-      ; (window as any).electronAPI.stopAgent()
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.stopAgent && agentStreamIdRef.current) {
+      ; (window as any).electronAPI.stopAgent(agentStreamIdRef.current)
+      agentStreamIdRef.current = null
     }
 
     setMessages(prev => prev.map(msg =>
@@ -424,6 +426,7 @@ export function useChat(conversationId: string | null) {
 
     // Generate a unique stream ID for this invocation to prevent crosstalk from aborted streams
     const streamId = `agent-stream-${Date.now()}`
+    agentStreamIdRef.current = streamId
 
     // Subscribe to agent events
     const cleanupChunk = electronAPI.onAgentChunk((chunk: any) => {
@@ -444,6 +447,8 @@ export function useChat(conversationId: string | null) {
         ))
         isStreamingRef.current = false
         setIsStreaming(false)
+        agentStreamIdRef.current = null
+        cleanupChunk()
       } else if (chunk.type === 'tool_running') {
         setMessages(prev => prev.map(msg =>
           msg.id === assistantMessageId
