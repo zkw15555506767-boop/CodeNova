@@ -1,6 +1,6 @@
 {
   "name": "codenova",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "CodeNova - 桌面端 AI 编程助手",
   "author": "CodeNova Team",
@@ -83,7 +83,8 @@
     },
     "files": [
       "out/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "node_modules/**/*"
     ],
     "mac": {
       "target": [
@@ -107,6 +108,11 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    }
+    },
+    "asarUnpack": [
+      "node_modules/node-pty/**/*",
+      "node_modules/better-sqlite3/**/*",
+      "node_modules/@anthropic-ai/claude-agent-sdk/**/*"
+    ]
   }
 }

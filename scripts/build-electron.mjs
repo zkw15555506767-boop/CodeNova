@@ -17,7 +17,7 @@ await esbuild.build({
   platform: 'node',
   target: 'node20',
   outfile: path.join(distDir, 'main.js'),
-  external: ['electron', 'node-pty', 'better-sqlite3'],
+  external: ['electron', 'node-pty', 'better-sqlite3', '@anthropic-ai/claude-agent-sdk', '@anthropic-ai/sdk'],
   format: 'cjs',
 })
 
@@ -28,7 +28,7 @@ await esbuild.build({
   platform: 'node',
   target: 'node20',
   outfile: path.join(distDir, 'preload.js'),
-  external: ['electron', 'node-pty', 'better-sqlite3'],
+  external: ['electron', 'node-pty', 'better-sqlite3', '@anthropic-ai/claude-agent-sdk', '@anthropic-ai/sdk'],
   format: 'cjs',
 })
 

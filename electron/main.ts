@@ -5,7 +5,10 @@ import * as os from 'os'
 
 // 处理 macOS 打包后 PATH 环境变量丢失导致找不到 node 命令的问题
 if (process.platform === 'darwin') {
-  process.env.PATH = `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin`
+  const commonPaths = ['/usr/local/bin', '/opt/homebrew/bin', '/opt/homebrew/sbin', '/usr/bin', '/bin', '/usr/sbin', '/sbin']
+  const currentPath = process.env.PATH || ''
+  const newPaths = commonPaths.filter(p => !currentPath.includes(p))
+  process.env.PATH = [...newPaths, currentPath].join(':')
 }
 
 // 禁用 GPU 加速，避免某些问题
@@ -524,10 +527,24 @@ function registerIpcHandlers() {
 
     try {
       // Dynamic import required because the SDK is pure ESM (.mjs)
-      const sdkPath = require.resolve('@anthropic-ai/claude-agent-sdk')
-      const sdkDir = require('path').dirname(sdkPath)
-      const cliJsPath = require('path').join(sdkDir, 'cli.js')
-      console.log('[api:agent] SDK cli.js path:', cliJsPath)
+      let cliJsPath = ''
+      try {
+        const sdkPath = require.resolve('@anthropic-ai/claude-agent-sdk')
+        const sdkDir = path.dirname(sdkPath)
+        cliJsPath = path.join(sdkDir, 'cli.js')
+
+        // In asar environment, we might need to handle the path differently or ensure it's unpacked
+        if (cliJsPath.includes('app.asar') && !cliJsPath.includes('app.asar.unpacked')) {
+          const unpackedPath = cliJsPath.replace('app.asar', 'app.asar.unpacked')
+          const fsSync = require('fs')
+          if (fsSync.existsSync(unpackedPath)) {
+            cliJsPath = unpackedPath
+          }
+        }
+      } catch (err) {
+        console.error('[api:agent] Failed to resolve Agent SDK path:', err)
+      }
+      console.log('[api:agent] Resolved Agent CLI path:', cliJsPath)
 
       // Use dynamic import() for the ESM module
       const { query } = await import('@anthropic-ai/claude-agent-sdk')
