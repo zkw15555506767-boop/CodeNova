@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="docs/assets/codenova_logo.png" width="120" style="border-radius:20px; box-shadow: 0 4px 14px rgba(0,0,0,0.1)"/>
   <h1>🚀 CodeNova</h1>
   <p>给 Claude Code 装上跑车引擎：你的原生桌面级 AI 编程助手</p>
 </div>
@@ -12,6 +13,7 @@ CodeNova 是基于官方 **Claude Agent SDK** 打造的现代化桌面可视化�
 | 核心优势 | CodeNova (可视化桌面端) | 原生 Claude Code (命令行 CLI) | 体验提升说明 |
 | :--- | :--- | :--- | :--- |
 | **📁 可视化项目树** | **内置文件树面板**<br>点击阅读代码，直接拖拽文件给 AI。 | **纯文本路径盲打**<br>只能通过 `ls` 查目录，需手动打绝对路径。 | **极大降低心智负担**。告别终端盲打，直观管理上下文。 |
+| **💬 对话自动保存** | **原生带历史记录的聊天流**<br>左侧边栏自动按时间管理你的历史开发进程，关机也不丢。 | **阅后即焚（难追溯）**<br>关闭终端后需要去非常隐蔽的缓存或者手敲特定命令恢复历史。 | **开发进程不中断**。多项目、多任务并行时游刃有余。 |
 | **🧩 沉浸式 Skill 管理** | **专属侧边栏 UI 表单**<br>像管理浏览器插件一样一键开关，填表编辑。 | **隐藏 MD 文件**<br>需钻进 `.agents/skills` 手写 YAML 和 MD。 | **零门槛复用 Prompt**。你的专属“编程绝招”触手可及。 |
 | **🔑 第三方 API 无缝接入** | **双模智能面板**<br>自动识别本地 `claude` 配置，亦可 UI 一键换源。 | **环境变量死磕**<br>需修改 `.zshrc` 或查阅复杂的 CLI 启动参数。 | **开箱即用的丝滑**。完美对接原生支持，国内 / 局域网福音。 |
 | **💰 实时成本面板** | **底部悬浮窗**<br>实时自动滚动计算本轮消耗的 Token 及对应美分。 | **需手动触发命令**<br>必须打断思路输入 `/cost` 并在日志中翻找。 | **终结价格焦虑**。时刻掌控当前的开销进度，防止意外扣费。 |
@@ -21,20 +23,20 @@ CodeNova 是基于官方 **Claude Agent SDK** 打造的现代化桌面可视化�
 
 ## 🎨 Showcase (界面展示)
 
-**1. 沉浸式项目管理界面**  
-![CodeNova Main UI](docs/assets/media__1772280682093.jpg)
+**1. 沉浸式项目管理界面 + 对话保存 + 危险命令安全拦截卡片**  
+![沉浸式界面展示](docs/assets/media__1772280682093.jpg)
 
-**2. 危险命令安全拦截卡片**  
-![Permission Interceptor](docs/assets/media__1772280691039.jpg)
+**2. 实时成本面板 + /命令**  
+![成本和命令](docs/assets/media__1772280691039.jpg)
 
-**3. 第三方模型 / 局域网 API 快速换源**  
-![Settings API](docs/assets/media__1772280707253.jpg)
+**3. 第三方 API + 本地 Claude Code 识别**  
+![API配置](docs/assets/media__1772280707253.jpg)
 
 **4. 技能 (Skill) 抽屉式聚合页面**  
-![Skill Manager](docs/assets/media__1772280713785.jpg)
+![技能管理](docs/assets/media__1772280713785.jpg)
 
-**5. 沉浸式 Prompt 表单化编辑**  
-![Editing Skill](docs/assets/media__1772280722031.jpg)
+**5. Skill 管理编辑详情**  
+![编辑技能](docs/assets/media__1772280722031.jpg)
 
 ---
 
