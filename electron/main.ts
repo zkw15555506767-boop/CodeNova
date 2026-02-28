@@ -549,6 +549,10 @@ function registerIpcHandlers() {
           // implicitly in the background process. 
           permissionMode: 'bypassPermissions',
           allowDangerouslySkipPermissions: true,
+          includePartialMessages: true,
+
+          // Force standard clean prompt to avoid node-pty hangs when user has zsh/starship
+          env: { ...process.env, PROMPT: '$ ', PS1: '$ ' },
 
           // Instead of canUseTool, we hook into PreToolUse to pause and ask the UI for permission manually
           hooks: {
@@ -588,9 +592,9 @@ function registerIpcHandlers() {
                     console.log('[api:agent] Hook permission result from UI:', requestId, approvedPayload.behavior)
 
                     if (approvedPayload.behavior === 'allow') {
-                      return { async: true, hookEventName: 'PreToolUse', permissionDecision: 'allow' }
+                      return { hookEventName: 'PreToolUse', permissionDecision: 'allow' }
                     } else {
-                      return { async: true, hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: approvedPayload.message || '用户拒绝了此操作' }
+                      return { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: approvedPayload.message || '用户拒绝了此操作' }
                     }
                   }
                 ]
@@ -600,24 +604,55 @@ function registerIpcHandlers() {
         },
       }
 
+      const agentEnv: Record<string, string> = { ...process.env, PROMPT: '$ ', PS1: '$ ' }
+
       if (settings?.model) {
         queryOptions.options.model = settings.model
       }
+
+      // Read API Key and Base URL from ~/.claude/settings.json because electron-store isn't readily available here
+      try {
+        const fsSync = require('fs')
+        const configPath = path.join(app.getPath('home'), '.claude', 'settings.json')
+        if (fsSync.existsSync(configPath)) {
+          const configRaw = fsSync.readFileSync(configPath, 'utf-8')
+          const config = JSON.parse(configRaw)
+          const env = config.env || {}
+
+          if (env.ANTHROPIC_BASE_URL) {
+            agentEnv['ANTHROPIC_BASE_URL'] = env.ANTHROPIC_BASE_URL
+          }
+          if (env.ANTHROPIC_AUTH_TOKEN || env.ANTHROPIC_API_KEY) {
+            agentEnv['ANTHROPIC_API_KEY'] = env.ANTHROPIC_AUTH_TOKEN || env.ANTHROPIC_API_KEY
+          }
+        }
+      } catch (e) {
+        console.error('[api:agent] Failed to read ~/.claude/settings.json strictly for env:', e)
+      }
+
+      queryOptions.options.env = agentEnv
 
       if (settings?.systemPrompt) {
         queryOptions.options.systemPrompt = settings.systemPrompt
       }
 
+      let hasStreamedText = false
+
       // Stream all SDK messages
       for await (const sdkMessage of (query as any)(queryOptions)) {
         const msgType = sdkMessage.type
 
-        if (msgType === 'assistant') {
+        if (msgType === 'stream_event') {
+          const event = (sdkMessage as any).event
+          if (event?.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            hasStreamedText = true
+            sender.send('agent:chunk', { streamId, type: 'text', text: event.delta.text })
+          }
+        } else if (msgType === 'assistant') {
+          // stream_event already sent text, we only care about tool_use here
           const content = sdkMessage.message?.content || []
           for (const block of content) {
-            if (block.type === 'text' && block.text) {
-              sender.send('agent:chunk', { streamId, type: 'text', text: block.text })
-            } else if (block.type === 'tool_use') {
+            if (block.type === 'tool_use') {
               sender.send('agent:chunk', { streamId, type: 'tool_running', toolName: block.name })
             }
           }
@@ -635,9 +670,19 @@ function registerIpcHandlers() {
           })
         } else if (msgType === 'error') {
           console.error('[api:agent] SDK Error Message:', sdkMessage)
+          sender.send('agent:chunk', { streamId, type: 'error', error: sdkMessage.error?.message || '未知错误' })
         } else if (msgType === 'result') {
-          console.log('[api:agent] Session finished')
-          sender.send('agent:chunk', { streamId, type: 'done' })
+          console.log('[api:agent] Session finished. Result payload:', sdkMessage)
+          if ((sdkMessage as any).is_error) {
+            console.error('[api:agent] SDK Session Error:', (sdkMessage as any).error)
+            sender.send('agent:chunk', { streamId, type: 'error', error: (sdkMessage as any).error?.message || 'Agent 运行失败' })
+          } else {
+            const finalResultText = (sdkMessage as any).result
+            if (!hasStreamedText && typeof finalResultText === 'string' && finalResultText) {
+              sender.send('agent:chunk', { streamId, type: 'text', text: finalResultText })
+            }
+            sender.send('agent:chunk', { streamId, type: 'done' })
+          }
         }
       }
 

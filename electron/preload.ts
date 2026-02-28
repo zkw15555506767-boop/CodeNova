@@ -72,8 +72,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Agent 工具调用循环
   startAgent: (
     messages: Array<{ role: string; content: any }>,
-    settings?: { apiKey?: string; baseUrl?: string; model?: string; workingDirectory?: string }
-  ) => ipcRenderer.invoke('api:agent', messages, settings),
+    settings?: { apiKey?: string; baseUrl?: string; model?: string; workingDirectory?: string },
+    streamId?: string
+  ) => ipcRenderer.invoke('api:agent', messages, settings, streamId),
 
   stopAgent: () => ipcRenderer.invoke('api:agent-stop'),
 

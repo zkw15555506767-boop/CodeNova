@@ -11,7 +11,7 @@ interface UseThemeReturn {
 }
 
 export function useTheme(): UseThemeReturn {
-  const [theme, setThemeState] = useState<Theme>('light')
+  const [theme, setThemeState] = useState<Theme>('gradient')
 
   useEffect(() => {
     // 从 localStorage 读取主题
@@ -19,8 +19,8 @@ export function useTheme(): UseThemeReturn {
     if (savedTheme) {
       setThemeState(savedTheme)
     } else {
-      // 默认为浅色主题
-      setThemeState('light')
+      // 默认为极光渐变主题
+      setThemeState('gradient')
     }
   }, [])
 
