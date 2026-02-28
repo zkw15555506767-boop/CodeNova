@@ -3,6 +3,11 @@ import * as path from 'path'
 import * as fs from 'fs/promises'
 import * as os from 'os'
 
+// 处理 macOS 打包后 PATH 环境变量丢失导致找不到 node 命令的问题
+if (process.platform === 'darwin') {
+  process.env.PATH = `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin`
+}
+
 // 禁用 GPU 加速，避免某些问题
 app.disableHardwareAcceleration()
 

@@ -59,7 +59,7 @@ export function InteractiveToolBlock({
             <div className="p-3 text-xs font-mono text-muted-foreground bg-black/20 space-y-2 overflow-x-auto">
                 {Object.entries(parameters).map(([key, value]) => (
                     <div key={key} className="flex flex-col gap-1.5">
-                        <span className="text-[10px] text-white/40 uppercase tracking-widest select-none">// {key}</span>
+                        <span className="text-[10px] text-white/40 uppercase tracking-widest select-none">{`// ${key}`}</span>
                         <span className="text-white/80 whitespace-pre-wrap leading-relaxed">{value}</span>
                     </div>
                 ))}

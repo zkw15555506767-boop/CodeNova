@@ -32,10 +32,10 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded])
 
-  // 如果没有对话，自动创廻一个
+  // 如果没有对话，自动创建一个
   useEffect(() => {
     if (conversations.length === 0) {
-      const conv = createConversation('MiniMax 对话')
+      const conv = createConversation('新对话')
       setSelectedConversation(conv.id)
     } else if (!selectedConversation) {
       setSelectedConversation(conversations[0].id)
@@ -83,7 +83,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [showFilePanel])
+  }, [showFilePanel, showTerminal])
 
   // 加载项目路径
   useEffect(() => {

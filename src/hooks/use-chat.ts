@@ -40,8 +40,25 @@ export function useChat(conversationId: string | null) {
   const [tokenStats, setTokenStats] = useState<TokenStats>({ inputTokens: 0, outputTokens: 0, totalCost: 0 })
   const [isApiConfigured, setIsApiConfigured] = useState(false)
 
-  const { settings: apiSettings } = useApiSettings()
+  const { settings: apiSettings, isLoaded: settingsLoaded } = useApiSettings()
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  const stopGenerating = useCallback(() => {
+    // 停止普通的 Chat 流
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    // 停止 Agent 会话
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.stopAgent) {
+      ; (window as any).electronAPI.stopAgent()
+    }
+
+    setMessages(prev => prev.map(msg =>
+      msg.isStreaming ? { ...msg, isStreaming: false, error: 'User aborted' } : msg
+    ))
+    setIsStreaming(false)
+    isStreamingRef.current = false
+  }, [])
 
   // Keep the ref current on every render
   useEffect(() => { messagesRef.current = messages }, [messages])
@@ -79,7 +96,14 @@ export function useChat(conversationId: string | null) {
     } else {
       setMessages([])
     }
-  }, [conversationId])
+
+    return () => {
+      // 切换对话时，如果有正在生成的任务，自动终止
+      if (isStreamingRef.current) {
+        stopGenerating()
+      }
+    }
+  }, [conversationId, settingsLoaded, stopGenerating])
 
   // 保存消息
   useEffect(() => {
@@ -320,23 +344,6 @@ export function useChat(conversationId: string | null) {
       abortControllerRef.current = null
     }
   }, [input, model, messages, apiSettings, isApiConfigured])
-
-  const stopGenerating = useCallback(() => {
-    // 停止普通的 Chat 流
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    // 停止 Agent 会话
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.stopAgent) {
-      ; (window as any).electronAPI.stopAgent()
-    }
-
-    setMessages(prev => prev.map(msg =>
-      msg.isStreaming ? { ...msg, isStreaming: false, error: 'User aborted' } : msg
-    ))
-    setIsStreaming(false)
-    isStreamingRef.current = false
-  }, [])
 
   const clearMessages = useCallback(() => {
     setMessages([])

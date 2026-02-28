@@ -31,6 +31,7 @@ export function TerminalPanel({ isExpanded, onToggleExpand }: TerminalPanelProps
             // Dynamic import to avoid SSR issues
             const { Terminal } = await import('xterm')
             const { FitAddon } = await import('xterm-addon-fit')
+            // @ts-expect-error type missing
             await import('xterm/css/xterm.css')
 
             if (disposed || !terminalRef.current) return
