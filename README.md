@@ -45,8 +45,8 @@ CodeNova 是基于官方 **Claude Agent SDK** 打造的现代化桌面可视化�
 提供两种使用方式，你可以直接下载开箱即用的安装包，或是克隆源码在本地通过命令行编译启动。
 
 ### 方式一：直接下载安装包 (推荐)
-前往项目的 [Release 页面](https://github.com/zkw15555506767-boop/CodeNova/releases/tag/v1.0.0) 下载最新的 **v1.0 版本** DMG 安装文件。
-1. 下载 `CodeNova-1.0.0-arm64.dmg`。
+前往项目的 [Release 页面](https://github.com/zkw15555506767-boop/CodeNova/releases/tag/v1.0.1) 下载最新的 **v1.0.1 版本** DMG 安装文件。
+1. 下载 `CodeNova-1.0.1-arm64.dmg`。
 2. 双击打开，将 **CodeNova** 图标拖拽进入 `Applications` (应用程序) 文件夹。
 3. 在启动台中打开即可使用！
 
