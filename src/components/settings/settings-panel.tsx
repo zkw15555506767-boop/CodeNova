@@ -424,127 +424,241 @@ function ShortcutsSettings() {
 }
 
 function MCPSettings() {
-  const { servers, addServer, deleteServer, toggleServer } = useMCPServers()
+  const { servers, addServer, deleteServer, toggleServer, refresh } = useMCPServers()
   const [showAdd, setShowAdd] = useState(false)
   const [newServer, setNewServer] = useState<Partial<MCPServer>>({
     name: '',
     type: 'stdio',
     command: '',
+    args: [],
+    env: {},
     enabled: true,
   })
 
+  // 临时存储输入框的值
+  const [rawArgs, setRawArgs] = useState('')
+  const [rawEnvStr, setRawEnvStr] = useState('')
+
   const handleAdd = () => {
     if (newServer.name && newServer.type) {
-      addServer(newServer as Omit<MCPServer, 'id'>)
+      // 解析 args -> 数组 (逗号或空格分割)
+      const parsedArgs = rawArgs
+        .split(/[\s,]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0)
+
+      // 解析 env -> JSON对象 (每一行 KEY=VALUE)
+      const parsedEnv: Record<string, string> = {}
+      rawEnvStr.split('\n').forEach(line => {
+        const idx = line.indexOf('=')
+        if (idx > 0) {
+          const key = line.slice(0, idx).trim()
+          const val = line.slice(idx + 1).trim()
+          if (key && val) parsedEnv[key] = val
+        }
+      })
+
+      addServer({
+        ...newServer,
+        args: parsedArgs.length > 0 ? parsedArgs : undefined,
+        env: Object.keys(parsedEnv).length > 0 ? parsedEnv : undefined
+      } as Omit<MCPServer, 'id'>)
+
       setNewServer({ name: '', type: 'stdio', command: '', enabled: true })
+      setRawArgs('')
+      setRawEnvStr('')
       setShowAdd(false)
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">MCP 服务器</h2>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm"
-        >
-          {showAdd ? '取消' : '+ 添加服务器'}
-        </button>
+        <h2 className="text-xl font-bold">MCP 服务器管理</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={refresh}
+            className="px-3 py-1.5 border border-border hover:bg-muted text-muted-foreground rounded-lg text-sm"
+          >
+            刷新配置
+          </button>
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className="px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium"
+          >
+            {showAdd ? '取消' : '+ 添加 MCP 服务器'}
+          </button>
+        </div>
       </div>
 
       {/* 添加表单 */}
       {showAdd && (
-        <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="text"
-              value={newServer.name || ''}
-              onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
-              placeholder="服务器名称"
-              className="p-2 rounded-lg border border-border bg-background"
-            />
-            <select
-              value={newServer.type}
-              onChange={(e) => setNewServer({ ...newServer, type: e.target.value as any })}
-              className="p-2 rounded-lg border border-border bg-background"
-            >
-              <option value="stdio">stdio</option>
-              <option value="sse">SSE</option>
-              <option value="http">HTTP</option>
-            </select>
+        <div className="p-5 rounded-xl border border-border bg-muted/20 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">服务器名称</label>
+              <input
+                type="text"
+                value={newServer.name || ''}
+                onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
+                placeholder="例如: minimax-mcp"
+                className="w-full p-2.5 rounded-lg border border-border bg-background outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">连接类型</label>
+              <select
+                value={newServer.type}
+                onChange={(e) => setNewServer({ ...newServer, type: e.target.value as any })}
+                className="w-full p-2.5 rounded-lg border border-border bg-background outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="stdio">stdio (本地执行)</option>
+                <option value="sse">SSE (远程 HTTP)</option>
+              </select>
+            </div>
           </div>
+
           {newServer.type === 'stdio' && (
-            <input
-              type="text"
-              value={newServer.command || ''}
-              onChange={(e) => setNewServer({ ...newServer, command: e.target.value })}
-              placeholder="命令 (如 npx)"
-              className="w-full p-2 rounded-lg border border-border bg-background"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">启动命令 (Command)</label>
+                <input
+                  type="text"
+                  value={newServer.command || ''}
+                  onChange={(e) => setNewServer({ ...newServer, command: e.target.value })}
+                  placeholder="例如: npx"
+                  className="w-full p-2.5 rounded-lg border border-border bg-background outline-none focus:ring-1 focus:ring-primary font-mono text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">启动参数 (Args) <span className="text-xs text-muted-foreground font-normal ml-1">空格或逗号分隔</span></label>
+                <input
+                  type="text"
+                  value={rawArgs}
+                  onChange={(e) => setRawArgs(e.target.value)}
+                  placeholder="例如: -y @minimax-ai/mcp-server"
+                  className="w-full p-2.5 rounded-lg border border-border bg-background outline-none focus:ring-1 focus:ring-primary font-mono text-sm"
+                />
+              </div>
+            </div>
           )}
-          {(newServer.type === 'sse' || newServer.type === 'http') && (
-            <input
-              type="text"
-              value={newServer.url || ''}
-              onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
-              placeholder="服务器 URL"
-              className="w-full p-2 rounded-lg border border-border bg-background"
-            />
+
+          {newServer.type === 'sse' && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">服务器 URL (SSE Endpoint)</label>
+              <input
+                type="text"
+                value={newServer.url || ''}
+                onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
+                placeholder="https://your-mcp-server.com/sse"
+                className="w-full p-2.5 rounded-lg border border-border bg-background outline-none focus:ring-1 focus:ring-primary font-mono text-sm"
+              />
+            </div>
           )}
-          <button onClick={handleAdd} className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg">
-            添加
-          </button>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">环境变量 (Env) <span className="text-xs text-muted-foreground font-normal ml-1">每行填写一个 KEY=VALUE</span></label>
+            <textarea
+              value={rawEnvStr}
+              onChange={(e) => setRawEnvStr(e.target.value)}
+              placeholder="MINIMAX_API_KEY=sk-xxxxxx&#10;OTHER_VAR=value"
+              className="w-full p-2.5 rounded-lg border border-border bg-background outline-none focus:ring-1 focus:ring-primary font-mono text-sm h-24 whitespace-pre"
+            />
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={handleAdd}
+              disabled={!newServer.name || (newServer.type === 'stdio' ? !newServer.command : !newServer.url)}
+              className="w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            >
+              保存并生效
+            </button>
+          </div>
         </div>
       )}
 
       {/* 服务器列表 */}
-      <div className="space-y-3">
+      <div className="grid gap-4">
         {servers.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            暂无 MCP 服务器
+          <div className="text-center py-12 border border-dashed border-border rounded-xl text-muted-foreground bg-muted/10">
+            暂无 MCP 服务器记录
           </div>
         ) : (
           servers.map((server) => (
-            <div key={server.id} className="p-4 rounded-lg border border-border">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{server.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-muted">{server.type}</span>
+            <div key={server.id} className={cn(
+              "p-4 rounded-xl border transition-all",
+              server.enabled ? "border-primary/20 bg-background" : "border-border bg-muted/20 opacity-70 grayscale-[50%]"
+            )}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-base text-foreground">{server.name}</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border uppercase">
+                      {server.type}
+                    </span>
+                    {!server.enabled && (
+                      <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">DISABLED</span>
+                    )}
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground mt-2 space-y-1">
+                    {server.command && (
+                      <div className="flex"><span className="w-16 opacity-50">Command</span> <span className="text-foreground">{server.command}</span></div>
+                    )}
+                    {server.args && server.args.length > 0 && (
+                      <div className="flex"><span className="w-16 opacity-50">Args</span> <span className="text-foreground">{server.args.join(' ')}</span></div>
+                    )}
+                    {server.url && (
+                      <div className="flex"><span className="w-16 opacity-50">URL</span> <span className="text-foreground">{server.url}</span></div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => toggleServer(server.id)}
                     className={cn(
-                      "5 rounded",
-                      server.enabled ? "text-greenp-1.-500" : "text-muted-foreground"
+                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none",
+                      server.enabled ? "bg-[#0ea5e9]" : "bg-muted-foreground/30"
                     )}
                   >
-                    {server.enabled ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        server.enabled ? "translate-x-4" : "-translate-x-0.5"
+                      )}
+                    />
                   </button>
                   <button
                     onClick={() => deleteServer(server.id)}
-                    className="p-1.5 rounded text-destructive hover:bg-destructive/10"
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors ml-1"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              {server.command && (
-                <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
-                  {server.command}
-                </pre>
-              )}
-              {server.url && (
-                <p className="text-xs text-muted-foreground">{server.url}</p>
+
+              {server.env && Object.keys(server.env).length > 0 && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Environment Variables</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {Object.entries(server.env).map(([k]) => (
+                      <div key={k} className="flex bg-muted/50 rounded overflow-hidden border border-border font-mono text-[10px]">
+                        <div className="bg-muted px-2 py-1 border-r border-border min-w-20 truncate" title={k}>{k}</div>
+                        <div className="px-2 py-1 text-muted-foreground truncate flex-1">********</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           ))
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        MCP (Model Context Protocol) 服务器可以扩展 Claude 的能力，如文件系统访问、数据库连接等。
+      <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10 flex gap-2 items-start mt-6">
+        <Info className="w-4 h-4 shrink-0 text-primary" />
+        <span>关闭 MCP 服务器开关时，您的配置会被安全地挂起隐藏，绝不丢失。当您重新打开开关，原装的命令和环境变量会立即恢复生效。</span>
       </p>
     </div>
   )
@@ -600,10 +714,12 @@ function SkillsSettings() {
 
   const handleOpenFolder = async () => {
     const api = (window as any).electronAPI
-    if (api?.getPath && api?.systemOpenPath) {
+    if (api?.getPath && api?.systemOpenPath && api?.createDir) {
       try {
         const home = await api.getPath('home')
-        await api.systemOpenPath(`${home}/.claude/skills`)
+        const skillsDir = `${home}/.claude/skills`
+        await api.createDir(skillsDir) // ensure the directory exists first
+        await api.systemOpenPath(skillsDir)
       } catch (e) {
         console.error('Failed to open skills folder:', e)
       }
@@ -813,7 +929,7 @@ function AboutSettings() {
           N
         </div>
         <h2 className="text-2xl font-bold mb-2">CodeNova</h2>
-        <p className="text-muted-foreground mb-4">版本 1.0.2</p>
+        <p className="text-muted-foreground mb-4">版本 1.0.3</p>
         <p className="text-sm text-muted-foreground mb-8">桌面端 AI 编程助手</p>
       </div>
 

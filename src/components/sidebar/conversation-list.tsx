@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Plus, MessageSquare, Archive, Trash2, Settings, Search, Pencil } from 'lucide-react'
+import { Plus, MessageSquare, Archive, Trash2, Settings, Search, Pencil, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Conversation } from '@/hooks/use-conversations'
 
@@ -14,6 +14,7 @@ interface ConversationListProps {
   onArchive: (id: string) => void
   onDelete: (id: string) => void
   onRename: (id: string, newTitle: string) => void
+  onOpenSetup: () => void
 }
 
 export function ConversationList({
@@ -25,6 +26,7 @@ export function ConversationList({
   onArchive,
   onDelete,
   onRename,
+  onOpenSetup,
 }: ConversationListProps) {
   const [showArchived, setShowArchived] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -53,13 +55,21 @@ export function ConversationList({
       </div>
 
       {/* 新建对话按钮 */}
-      <div className="p-2">
+      <div className="p-2 space-y-2">
         <button
           onClick={onNewConversation}
           className="w-full h-9 flex items-center justify-center gap-2 rounded-lg bg-primary/90 text-primary-foreground hover:bg-primary transition-colors text-sm font-medium shadow-[0_10px_20px_-15px_rgba(0,0,0,0.6)]"
         >
           <Plus className="w-4 h-4" />
           新建对话
+        </button>
+
+        <button
+          onClick={onOpenSetup}
+          className="w-full h-9 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white hover:from-purple-600/30 hover:to-blue-600/30 transition-all text-xs font-bold border border-purple-500/20 shadow-lg group"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-purple-400 group-hover:animate-pulse" />
+          一键配置 Claude Code
         </button>
       </div>
 
@@ -96,14 +106,14 @@ export function ConversationList({
                   <ConversationItem
                     key={conv.id}
                     conversation={conv}
-                  isSelected={selectedId === conv.id}
-                  onSelect={() => onSelect(conv.id)}
-                  onArchive={() => onArchive(conv.id)}
-                  onDelete={() => onDelete(conv.id)}
-                  onRename={(id, title) => onRename(id, title)}
-                />
-              ))}
-            </div>
+                    isSelected={selectedId === conv.id}
+                    onSelect={() => onSelect(conv.id)}
+                    onArchive={() => onArchive(conv.id)}
+                    onDelete={() => onDelete(conv.id)}
+                    onRename={(id, title) => onRename(id, title)}
+                  />
+                ))}
+              </div>
             )}
           </>
         )}

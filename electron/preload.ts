@@ -32,9 +32,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 退出应用
   quitApp: () => ipcRenderer.invoke('app:quit'),
 
-  // Claude 路径
+  // Claude 路径与环境
   getClaudePath: () => ipcRenderer.invoke('claude:getPath'),
   getClaudeConfig: () => ipcRenderer.invoke('claude:getConfig'),
+  checkEnv: () => ipcRenderer.invoke('env:check'),
+  installClaude: () => ipcRenderer.invoke('claude:install'),
+  saveClaudeConfig: (config: { apiKey: string; baseUrl: string; syncGlobal?: boolean }) =>
+    ipcRenderer.invoke('claude:saveConfig', config),
+
+  // MCP
+  getMcpConfig: () => ipcRenderer.invoke('mcp:getConfig'),
+  saveMcpConfig: (config: any) => ipcRenderer.invoke('mcp:saveConfig', config),
 
   // 监听事件
   onMaximizeChange: (callback: (isMaximized: boolean) => void) => {
@@ -113,6 +121,9 @@ export interface ElectronAPI {
   quitApp: () => Promise<void>
   getClaudePath: () => Promise<string | null>
   getClaudeConfig: () => Promise<{ exists: boolean; path: string | null; env: Record<string, string> | null }>
+  checkEnv: () => Promise<{ node: boolean; npm: boolean; claude: boolean; nodeVersion?: string }>
+  installClaude: () => Promise<{ success: boolean; error?: string }>
+  saveClaudeConfig: (config: { apiKey: string; baseUrl: string }) => Promise<{ success: boolean; error?: string }>
   onMaximizeChange: (callback: (isMaximized: boolean) => void) => void
   createTerminal: () => Promise<void>
   sendTerminalData: (data: string) => void

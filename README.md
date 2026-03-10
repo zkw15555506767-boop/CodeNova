@@ -1,101 +1,64 @@
-<div align="center">
-  <img src="docs/assets/codenova_logo.png" width="120" style="border-radius:20px; box-shadow: 0 4px 14px rgba(0,0,0,0.1)"/>
-  <h1>🚀 CodeNova</h1>
-  <p>给 Claude Code 装上跑车引擎：你的原生桌面级 AI 编程助手</p>
-</div>
+# CodeNova 🚀
 
-CodeNova 是基于官方 **Claude Agent SDK** 打造的现代化桌面可视化客户端。它保留了 Claude Code 强大的底层自动编程、终端执行和文件改写能力，同时补齐了命令行工具在交互体验、安全管控和项目管理上的短板。
+**CodeNova** 是一款基于 Electron + Next.js 打造的现代化、高颜值的桌面端 AI 编程助手。它深度集成了 Anthropic 的 Claude Code 核心能力，并针对国内开发者优化了 **MiniMax-M2.5** 和 **智谱 GLM** 等顶尖大模型的接入。
 
 ---
 
-## ✨ CodeNova 相较于原生 Claude Code (CLI) 的优势
+## ✨ 核心特性
 
-| 核心优势 | CodeNova (可视化桌面端) | 原生 Claude Code (命令行 CLI) | 体验提升说明 |
-| :--- | :--- | :--- | :--- |
-| **📁 可视化项目树** | **内置文件树面板**<br>点击阅读代码，直接拖拽文件给 AI。 | **纯文本路径盲打**<br>只能通过 `ls` 查目录，需手动打绝对路径。 | **极大降低心智负担**。告别终端盲打，直观管理上下文。 |
-| **💬 对话自动保存** | **原生带历史记录的聊天流**<br>左侧边栏自动按时间管理你的历史开发进程，关机也不丢。 | **阅后即焚（难追溯）**<br>关闭终端后需要去非常隐蔽的缓存或者手敲特定命令恢复历史。 | **开发进程不中断**。多项目、多任务并行时游刃有余。 |
-| **🧩 沉浸式 Skill 管理** | **专属侧边栏 UI 表单**<br>像管理浏览器插件一样一键开关，填表编辑。 | **隐藏 MD 文件**<br>需钻进 `.agents/skills` 手写 YAML 和 MD。 | **零门槛复用 Prompt**。你的专属“编程绝招”触手可及。 |
-| **🔑 第三方 API 无缝接入** | **双模智能面板**<br>自动识别本地 `claude` 配置，亦可 UI 一键换源。 | **环境变量死磕**<br>需修改 `.zshrc` 或查阅复杂的 CLI 启动参数。 | **开箱即用的丝滑**。完美对接原生支持，国内 / 局域网福音。 |
-| **💰 实时成本面板** | **底部悬浮窗**<br>实时自动滚动计算本轮消耗的 Token 及对应美分。 | **需手动触发命令**<br>必须打断思路输入 `/cost` 并在日志中翻找。 | **终结价格焦虑**。时刻掌控当前的开销进度，防止意外扣费。 |
-| **🛡️ 交互式安全拦截** | **精美的审核弹窗**<br>高危命令（终端脚本、读写文件）弹出可视化卡片。 | **被日志淹没的 `(y/N)`**<br>终端滚屏太快，危险请求混杂在海量输出中极易误触。 | **绝对的安全防线**。从容思考每一次改写，杜绝“删库跑路”。 |
+### 1️⃣ 一键闪电部署 (One-Click Setup v2)
+告别复杂的终端环境配置！CodeNova 内置全自动检测与安装流程。
+- **智能环境检测**: 自动探测 Node.js 环境及 Claude CLI。
+- **多引擎一键映射**: 预设 MiniMax (M2.5)、智谱等路由规则，模型别名自动劫持，确保第三方 API 在官方 SDK 中完美运行。
+- **沙盒隔离模式**: 凭证仅存于应用内部，不污染全局环境，支持一键同步至系统全局。
 
----
+![环境扫描](https://raw.githubusercontent.com/zkw15555506767-boop/CodeNova/main/docs/setup-1.png)
+![选择大脑](https://raw.githubusercontent.com/zkw15555506767-boop/CodeNova/main/docs/setup-2.png)
+![配置配置](https://raw.githubusercontent.com/zkw15555506767-boop/CodeNova/main/docs/setup-3.png)
 
-## 🎨 Showcase (界面展示)
+### 2️⃣ 🔌 MCP 服务器可视化管理
+Model Context Protocol 原生支持，通过 UI 轻松扩展 AI 的能力边界。
+- **可视化启停**: 一键开关 MCP 服务器，配置无损保留（移至 `disabledMcpServers`）。
+- **参数动态解析**: 简单的空格或逗号分割即可定义启动参数。
+- **环境隔离**: 为每个 MCP 单独配置环境变量。
 
-**1. 沉浸式项目管理界面 + 对话保存 + 危险命令安全拦截卡片**  
-![沉浸式界面展示](docs/assets/media__1772280682093.jpg)
+![MCP 管理](https://raw.githubusercontent.com/zkw15555506767-boop/CodeNova/main/docs/mcp-manager.png)
 
-**2. 实时成本面板 + /命令**  
-![成本和命令](docs/assets/media__1772280691039.jpg)
-
-**3. 第三方 API + 本地 Claude Code 识别**  
-![API配置](docs/assets/media__1772280707253.jpg)
-
-**4. 技能 (Skill) 抽屉式聚合页面**  
-![技能管理](docs/assets/media__1772280713785.jpg)
-
-**5. Skill 管理编辑详情**  
-![编辑技能](docs/assets/media__1772280722031.jpg)
+### 3️⃣ 智能技能系统 (Skills)
+- **卡片式管理**: 像开关灯一样管理你的 AI 技能插件。
+- **一键追溯**: 直接在界面打开 Skills 源代码目录。
 
 ---
 
-## 📥 下载与安装
-
-提供两种使用方式，你可以直接下载开箱即用的安装包，或是克隆源码在本地通过命令行编译启动。
+## 🛠 快速开始
 
 ### 方式一：直接下载安装包 (推荐)
-前往项目的 [Release 页面](https://github.com/zkw15555506767-boop/CodeNova/releases/tag/v1.0.2) 下载最新的 **v1.0.2 版本** DMG 安装文件。
-1. 下载 `CodeNova-1.0.2-arm64.dmg`。
+前往项目的 [Release 页面](https://github.com/zkw15555506767-boop/CodeNova/releases/tag/v1.0.3) 下载最新的 **v1.0.3 版本** DMG 安装文件。
+1. 下载 `CodeNova-1.0.3-arm64.dmg`。
 2. 双击打开，将 **CodeNova** 图标拖拽进入 `Applications` (应用程序) 文件夹。
 3. 在启动台中打开即可使用！
 
-### 方式二：源码启动 (开发者)
+### 方式二：源码编译
 ```bash
-# 1. 克隆仓库
+# 克隆仓库
 git clone https://github.com/zkw15555506767-boop/CodeNova.git
 cd CodeNova
 
-# 2. 安装依赖
+# 安装依赖
 npm install
 
-# 3. 启动应用
+# 启动开发环境
 npm run electron:dev
+
+# 打包正式版
+npm run electron:build
 ```
 
-### 解决 macOS "应用已损坏" / "无法验证开发者" 问题
-由于此安装包是用个人开发者证书构建的，macOS 的安全机制（Gatekeeper）可能会默认拦截从网页下载的应用。
-
-**解决方案：**
-1. 把 CodeNova.app 放到 Applications (应用程序) 文件夹后
-2. 打开系统自带的 **终端 (Terminal)** 
-3. 复制并执行以下命令解除系统的隔离限制（过程可能会要求你输入电脑开机密码）：
-   ```bash
-   sudo xattr -rd com.apple.quarantine /Applications/CodeNova.app
-   ```
-4. 执行完成后，再去启动台点击 CodeNova 即可满血畅听！
-
 ---
 
-## 🤖 强大的模型支持
+## 📝 开发者备注
+本项目目前处于快速迭代期。如果你发现了 Bug 或有更好的功能建议，欢迎提交 Issue 或 Pull Request。
 
-CodeNova 支持动态切换底层驱动的 AI 模型，只需在设置面板或右上角下拉菜单一键切换：
-- **Claude 系列**: Claude 3.5 Sonnet (默认最强)、Opus、Haiku 等。
-- **第三方兼容 API**: 国内极速大模型体验！目前已原生测试支持 **MiniMax (abab6.5s 等)** 以及 DeepSeek 等兼容 OpenAI 格式的高性价比局域网/国产大模型，让你在没有官方 API 的情况下依然享受到强悍的 Code 编写能力！
-
----
-
-## 🗺️ Future Plans (未来规划)
-
-我们的征途才刚刚开始，以下是 CodeNova 接下来即将上线的杀手级特性：
-
-- [ ] **一键部署 Claude Code**: 极简化新手的上手门槛，剥离复杂的环境配置依赖，在 APP 内部做到“一键下载并配置底层引擎”。
-- [ ] **Remote Control (远程开发接入)**: 突破本地系统限制，支持一键连入远端服务器或 Docker 容器的终端，让 Agent 在沙盒/云端优雅地执行高危任务和自动化运行测试。
-- [ ] **定时任务与心跳守护 (Cron & Heartbeat)**: 将 CodeNova 变成你的自动化数字打工人。支持设置巡检定时任务，比如“每天早上检查 CI 报错日志并尝试修复给出 PR”，即使在前台挂起时，大模型也能按照心跳机制持续帮你监控代码库健康状态。
-
----
-
-## 📄 许可证
-
-本项目基于 [MIT License](LICENSE) 协议开源。
-欢迎各位开发者提交 Issue 和 Pull Request，一起来打造最好用的跨平台 AI 客户端！
+- **版本**: v1.0.3
+- **协议**: MIT
+- **作者**: CodeNova Team

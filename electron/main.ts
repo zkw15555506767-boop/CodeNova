@@ -2,6 +2,19 @@ import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell, dialog, gl
 import * as path from 'path'
 import * as fs from 'fs/promises'
 import * as os from 'os'
+import Store from 'electron-store'
+
+// 初始化应用隔离配置存储 (Lazy initialization to prevent early-access crash)
+let store: Store<{
+  claudeConfig: { apiKey: string; baseUrl: string; defaultModel?: string }
+}> | null = null
+
+function getStore() {
+  if (!store) {
+    store = new Store<{ claudeConfig: { apiKey: string; baseUrl: string; defaultModel?: string } }>()
+  }
+  return store
+}
 
 // 处理 macOS 打包后 PATH 环境变量丢失导致找不到 node 命令的问题
 if (process.platform === 'darwin') {
@@ -276,6 +289,93 @@ function registerIpcHandlers() {
     }
   })
 
+  // 环境检测
+  ipcMain.handle('env:check', async () => {
+    const { execSync } = require('child_process')
+    const results = { node: false, npm: false, claude: false, nodeVersion: '' }
+
+    try {
+      results.nodeVersion = execSync('node -v', { encoding: 'utf-8' }).trim()
+      results.node = true
+    } catch { }
+
+    try {
+      execSync('npm -v', { encoding: 'utf-8' })
+      results.npm = true
+    } catch { }
+
+    try {
+      execSync('which claude', { encoding: 'utf-8' })
+      results.claude = true
+    } catch { }
+
+    return results
+  })
+
+  // 安装 Claude Code
+  ipcMain.handle('claude:install', async () => {
+    const { exec } = require('child_process')
+    const util = require('util')
+    const execPromise = util.promisify(exec)
+
+    try {
+      // 尝试全局安装
+      await execPromise('npm install -g @anthropic-ai/claude-code')
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to install Claude Code:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 保存 Claude Code 配置
+  ipcMain.handle('claude:saveConfig', async (_, { apiKey, baseUrl, defaultModel, syncGlobal }: { apiKey: string; baseUrl: string; defaultModel?: string; syncGlobal?: boolean }) => {
+    try {
+      // 1. 无条件：存入当前应用沙盒（Electron Store）
+      getStore().set('claudeConfig', { apiKey, baseUrl, defaultModel })
+
+      // 2. 如果且仅如果勾选了全局同步，写回系统 ~/.claude/settings.json
+      if (syncGlobal) {
+        const home = app.getPath('home')
+        const configDir = path.join(home, '.claude')
+        const configPath = path.join(configDir, 'settings.json')
+
+        // 确保目录存在
+        try {
+          await fs.mkdir(configDir, { recursive: true })
+        } catch { }
+
+        let config: any = {}
+        try {
+          const raw = await fs.readFile(configPath, 'utf-8')
+          config = JSON.parse(raw)
+        } catch { }
+
+        if (!config.env) config.env = {}
+
+        config.env.ANTHROPIC_AUTH_TOKEN = apiKey
+        config.env.ANTHROPIC_API_KEY = apiKey
+        if (baseUrl) {
+          config.env.ANTHROPIC_BASE_URL = baseUrl
+        }
+        if (defaultModel) {
+          config.env.ANTHROPIC_MODEL = defaultModel
+          config.env.ANTHROPIC_SMALL_FAST_MODEL = defaultModel
+          config.env.ANTHROPIC_DEFAULT_SONNET_MODEL = defaultModel
+          config.env.ANTHROPIC_DEFAULT_OPUS_MODEL = defaultModel
+          config.env.ANTHROPIC_DEFAULT_HAIKU_MODEL = defaultModel
+        }
+
+        await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8')
+      }
+
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to save Claude Code config:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
   // 读取本地 Claude Code 配置
   ipcMain.handle('claude:getConfig', async () => {
     try {
@@ -309,6 +409,83 @@ function registerIpcHandlers() {
     }
   })
 
+  // 读取本地 MCP 配置
+  ipcMain.handle('mcp:getConfig', async () => {
+    try {
+      const home = app.getPath('home')
+      const configPath = path.join(home, '.claude', 'mcp.json')
+
+      try {
+        await fs.access(configPath)
+      } catch {
+        return { mcpServers: {} }
+      }
+
+      const raw = await fs.readFile(configPath, 'utf-8')
+      const parsed = JSON.parse(raw)
+
+      // 合并 mcpServers 和 disabledMcpServers (增加 disabled 标识)
+      const result: Record<string, any> = {}
+
+      if (parsed.mcpServers) {
+        for (const [key, val] of Object.entries(parsed.mcpServers)) {
+          result[key] = { ...(val as Record<string, any>), disabled: false }
+        }
+      }
+
+      if (parsed.disabledMcpServers) {
+        for (const [key, val] of Object.entries(parsed.disabledMcpServers)) {
+          result[key] = { ...(val as Record<string, any>), disabled: true }
+        }
+      }
+
+      return { mcpServers: result }
+    } catch (error) {
+      console.error('Failed to read MCP config:', error)
+      return { mcpServers: {} }
+    }
+  })
+
+  // 保存 MCP 配置
+  ipcMain.handle('mcp:saveConfig', async (_, config: { mcpServers: Record<string, any> }) => {
+    try {
+      const home = app.getPath('home')
+      const configDir = path.join(home, '.claude')
+      const configPath = path.join(configDir, 'mcp.json')
+
+      try {
+        await fs.mkdir(configDir, { recursive: true })
+      } catch { }
+
+      let existing: any = {}
+      try {
+        const raw = await fs.readFile(configPath, 'utf-8')
+        existing = JSON.parse(raw)
+      } catch { }
+
+      const newMcpServers: Record<string, any> = {}
+      const newDisabledMcpServers: Record<string, any> = {}
+
+      for (const [key, val] of Object.entries(config.mcpServers)) {
+        const { disabled, ...serverConfig } = val
+        if (disabled) {
+          newDisabledMcpServers[key] = serverConfig
+        } else {
+          newMcpServers[key] = serverConfig
+        }
+      }
+
+      existing.mcpServers = newMcpServers
+      existing.disabledMcpServers = newDisabledMcpServers
+
+      await fs.writeFile(configPath, JSON.stringify(existing, null, 2), 'utf-8')
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to save MCP config:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
   // 终端 PTY
   ipcMain.handle('term:create', () => {
     if (ptyProcess) return
@@ -317,12 +494,27 @@ function registerIpcHandlers() {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const nodePty = require('node-pty')
       const shell = process.env[os.platform() === 'win32' ? 'COMSPEC' : 'SHELL'] as string || '/bin/sh'
+
+      const termEnv = { ...process.env }
+      const appConfig = getStore().get('claudeConfig') as { apiKey: string; baseUrl: string; defaultModel?: string } | undefined
+      if (appConfig) {
+        if (appConfig.apiKey) termEnv.ANTHROPIC_AUTH_TOKEN = appConfig.apiKey
+        if (appConfig.baseUrl) termEnv.ANTHROPIC_BASE_URL = appConfig.baseUrl
+        if (appConfig.defaultModel) {
+          termEnv.ANTHROPIC_MODEL = appConfig.defaultModel
+          termEnv.ANTHROPIC_SMALL_FAST_MODEL = appConfig.defaultModel
+          termEnv.ANTHROPIC_DEFAULT_SONNET_MODEL = appConfig.defaultModel
+          termEnv.ANTHROPIC_DEFAULT_OPUS_MODEL = appConfig.defaultModel
+          termEnv.ANTHROPIC_DEFAULT_HAIKU_MODEL = appConfig.defaultModel
+        }
+      }
+
       ptyProcess = nodePty.spawn(shell, [], {
         name: 'xterm-color',
         cols: 80,
         rows: 24,
         cwd: app.getPath('home'),
-        env: process.env as any,
+        env: termEnv as any,
       })
       ptyProcess.onData((data: string) => {
         mainWindow?.webContents.send('term:data', data)
@@ -568,8 +760,19 @@ function registerIpcHandlers() {
           allowDangerouslySkipPermissions: true,
           includePartialMessages: true,
 
-          // Force standard clean prompt to avoid node-pty hangs when user has zsh/starship
-          env: { ...process.env, PROMPT: '$ ', PS1: '$ ' },
+          // 动态注入环境：确保沙盒配置覆盖，但保持 Prompt 兼容性
+          env: (() => {
+            const injected: Record<string, string | undefined> = { ...process.env, PROMPT: '$ ', PS1: '$ ' }
+            const appConfig = getStore().get('claudeConfig')
+            if (appConfig?.apiKey) {
+              injected.ANTHROPIC_AUTH_TOKEN = appConfig.apiKey
+              injected.ANTHROPIC_API_KEY = appConfig.apiKey
+            }
+            if (appConfig?.baseUrl) {
+              injected.ANTHROPIC_BASE_URL = appConfig.baseUrl
+            }
+            return injected
+          })(),
 
           // Instead of canUseTool, we hook into PreToolUse to pause and ask the UI for permission manually
           hooks: {

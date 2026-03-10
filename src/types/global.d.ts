@@ -17,7 +17,26 @@ export interface ElectronAPI {
   quitApp: () => Promise<void>
   getClaudePath: () => Promise<string | null>
   getClaudeConfig: () => Promise<{ exists: boolean; path: string | null; env: Record<string, string> | null }>
+  checkEnv: () => Promise<{ node: boolean; npm: boolean; claude: boolean; nodeVersion?: string }>
+  installClaude: () => Promise<{ success: boolean; error?: string }>
+  saveClaudeConfig: (config: { apiKey: string; baseUrl: string; defaultModel?: string; syncGlobal?: boolean }) => Promise<{ success: boolean; error?: string }>
+
+  // MCP 相关的 API
+  getMcpConfig: () => Promise<McpConfig | null>
+  saveMcpConfig: (config: McpConfig) => Promise<{ success: boolean; error?: string }>
+
   onMaximizeChange: (callback: (isMaximized: boolean) => void) => void
+}
+
+export interface McpServerConfig {
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  disabled?: boolean;
+}
+
+export interface McpConfig {
+  mcpServers: Record<string, McpServerConfig>;
 }
 
 declare global {

@@ -12,6 +12,7 @@ import { TitleBar } from '@/components/ui/title-bar'
 import { SettingsPanel } from '@/components/settings/settings-panel'
 import { CommandPalette } from '@/components/chat/command-palette'
 import { TerminalPanel } from '@/components/chat/terminal-panel'
+import { SetupModal } from '@/components/setup/setup-modal'
 
 export default function Home() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
@@ -19,6 +20,7 @@ export default function Home() {
   const [showTerminal, setShowTerminal] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
+  const [showSetup, setShowSetup] = useState(false)
   const [projectPath, setProjectPath] = useState<string>('')
 
   const { conversations, createConversation, updateConversation, archiveConversation, deleteConversation } = useConversations()
@@ -205,6 +207,7 @@ export default function Home() {
               setSelectedConversation(newConv.id)
             }}
             onOpenSettings={() => setShowSettings(true)}
+            onOpenSetup={() => setShowSetup(true)}
             onArchive={(id) => archiveConversation(id)}
             onDelete={(id) => deleteConversation(id)}
             onRename={(id, newTitle) => {
@@ -224,6 +227,12 @@ export default function Home() {
       <CommandPalette
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
+      />
+
+      {/* 设置向导 */}
+      <SetupModal
+        isOpen={showSetup}
+        onClose={() => setShowSetup(false)}
       />
     </div>
   )
